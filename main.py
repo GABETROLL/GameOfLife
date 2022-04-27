@@ -7,11 +7,10 @@ WHITE = (255, 255, 255)
 
 
 def custom_number_base(length: int, items: list):
-    if length == 1:
-        for i in items:
+    for i in items:
+        if length == 1:
             yield [i]
-    else:
-        for i in items:
+        else:
             for new in custom_number_base(length - 1, items):
                 yield [i] + new
 
