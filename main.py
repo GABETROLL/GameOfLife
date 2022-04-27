@@ -35,12 +35,8 @@ def play(board: set, rows: int):
         for j in range(rows):
             count = neighbor_count(board, (i, j))
 
-            if (i, j) in board:
-                if count == 2 or count == 3:
-                    new_board.add((i, j))
-            else:
-                if count == 3:
-                    new_board.add((i, j))
+            if count == 3 or ((i, j) in board and count == 2):
+                new_board.add((i, j))
 
     return new_board
 
@@ -50,8 +46,8 @@ def display(window, board: set, width: int, rows: int):
 
     block_width = width // rows
 
-    for (xpos, ypos) in board:
-        pygame.draw.rect(window, WHITE, pygame.Rect(block_width * xpos, block_width * ypos, block_width, block_width))
+    for (x_pos, y_pos) in board:
+        pygame.draw.rect(window, WHITE, pygame.Rect(block_width * x_pos, block_width * y_pos, block_width, block_width))
 
 
 def draw(board: set, width: int, rows: int, erasing=False):
