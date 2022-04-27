@@ -1,5 +1,9 @@
-from game import *
+import pygame
+from game import play
 from tkinter import filedialog
+
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
 
 
 def save(board: set):
