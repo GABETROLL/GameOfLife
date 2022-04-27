@@ -25,14 +25,9 @@ def open_file():
 
 
 def camera_movement_handler(keys, camera_pos, speed: int):
-    if keys[pygame.K_w]:
-        camera_pos[1] += speed
-    if keys[pygame.K_a]:
-        camera_pos[0] += speed
-    if keys[pygame.K_s]:
-        camera_pos[1] -= speed
-    if keys[pygame.K_d]:
-        camera_pos[0] -= speed
+    camera_pos[0] += speed * (keys[pygame.K_a] - keys[pygame.K_d] + keys[pygame.K_LEFT] - keys[pygame.K_RIGHT])
+    camera_pos[1] += speed * (keys[pygame.K_w] - keys[pygame.K_s] + keys[pygame.K_UP] - keys[pygame.K_DOWN])
+    # WASD + D-PAD
 
 
 def display(window, board: set, block_width: int, camera_position):
