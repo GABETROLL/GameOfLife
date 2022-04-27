@@ -20,7 +20,7 @@ def neighbors(board: set, pos: tuple[int, int]):
     return result
 
 
-def play(board: set, rows: int):
+def play(board: set):
     new_board = set()
 
     for cell in board:

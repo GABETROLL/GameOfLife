@@ -24,20 +24,31 @@ def open_file():
         return eval(file.read())
 
 
-def display(window, board: set, width: int, rows: int):
+def camera_movement_handler(keys, camera_pos, speed: int):
+    if keys[pygame.K_w]:
+        camera_pos[1] += speed
+    if keys[pygame.K_a]:
+        camera_pos[0] += speed
+    if keys[pygame.K_s]:
+        camera_pos[1] -= speed
+    if keys[pygame.K_d]:
+        camera_pos[0] -= speed
+
+
+def display(window, board: set, block_width: int, camera_position):
     window.fill(BLACK)
 
-    block_width = width // rows
-
     for (x_pos, y_pos) in board:
-        pygame.draw.rect(window, WHITE, pygame.Rect(block_width * x_pos, block_width * y_pos, block_width, block_width))
+        pygame.draw.rect(window, WHITE, pygame.Rect(block_width * (x_pos + camera_position[0]),
+                                                    block_width * (y_pos + camera_position[1]),
+                                                    block_width,
+                                                    block_width))
 
 
-def draw(board: set, width: int, rows: int, erasing=False):
+def draw(board: set, block_width: int, camera_position, erasing=False):
     mouse_pos = pygame.mouse.get_pos()
 
-    block_width = width // rows
-    board_pos = (mouse_pos[0] // block_width, mouse_pos[1] // block_width)
+    board_pos = (mouse_pos[0] // block_width - camera_position[0], mouse_pos[1] // block_width - camera_position[1])
 
     if erasing:
         if board_pos in board:
@@ -53,6 +64,8 @@ def main(rows: int, width: int):
     pygame.display.set_caption("Game Of Life")
     clock = pygame.time.Clock()
     running = True
+    camera_pos = [0, 0]
+    block_width = width // rows
 
     drawing = True
 
@@ -67,21 +80,25 @@ def main(rows: int, width: int):
 
         keys = pygame.key.get_pressed()
 
-        if keys[pygame.K_s]:
-            save(board)
-        elif keys[pygame.K_o]:
-            new_board = open_file()
-            if new_board:
-                board = new_board
+        camera_movement_handler(keys, camera_pos, 1)
 
         if drawing:
             mouse_buttons = pygame.mouse.get_pressed(3)
             if mouse_buttons[0]:
-                draw(board, width, rows)
+                draw(board, block_width, camera_pos)
             elif mouse_buttons[2]:
-                draw(board, width, rows, erasing=True)
+                draw(board, block_width, camera_pos, erasing=True)
+            # mouse
+
+            if keys[pygame.K_RETURN]:
+                save(board)
+            elif keys[pygame.K_BACKSPACE]:
+                new_board = open_file()
+                if new_board:
+                    board = new_board
+            # save/open files
         else:
-            board = play(board, rows)
+            board = play(board)
 
         current_space = keys[pygame.K_SPACE]
         if current_space and not previous_space:
@@ -90,7 +107,7 @@ def main(rows: int, width: int):
         previous_space = current_space
         # press space bar once.
 
-        display(window, board, width, rows)
+        display(window, board, block_width, camera_pos)
         pygame.display.update()
 
     pygame.quit()
