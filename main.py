@@ -96,12 +96,11 @@ def main(rows: int):
         else:
             board = play(board, rows)
 
-        if keys[pygame.K_SPACE] and not previous_space:
+        current_space = keys[pygame.K_SPACE]
+        if current_space and not previous_space:
             drawing = not drawing
 
-            previous_space = True
-        elif not keys[pygame.K_SPACE]:
-            previous_space = False
+        previous_space = current_space
         # press space bar once.
 
         display(window, board, WIDTH, rows)
