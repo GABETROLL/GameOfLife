@@ -1,44 +1,23 @@
-import pygame
-
-WIDTH = 800
-
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
+from game import *
+from tkinter import filedialog
 
 
-def custom_number_base(length: int, items: list):
-    for i in items:
-        if length == 1:
-            yield [i]
-        else:
-            for new in custom_number_base(length - 1, items):
-                yield [i] + new
+def save(board: set):
+    path = filedialog.asksaveasfilename()
+    if not path:
+        return
+
+    with open(path, "w") as file:
+        file.write(str(board))
 
 
-def neighbor_count(board: set, pos: tuple[int, int]):
-    count = 0
+def open_file():
+    path = filedialog.askopenfilename()
+    if not path:
+        return
 
-    for move in custom_number_base(2, [-1, 0, 1]):
-        if move == [0, 0]:
-            continue
-
-        if (pos[0] + move[0], pos[1] + move[1]) in board:
-            count += 1
-
-    return count
-
-
-def play(board: set, rows: int):
-    new_board = set()
-
-    for i in range(rows):
-        for j in range(rows):
-            count = neighbor_count(board, (i, j))
-
-            if count == 3 or ((i, j) in board and count == 2):
-                new_board.add((i, j))
-
-    return new_board
+    with open(path, "r") as file:
+        return eval(file.read())
 
 
 def display(window, board: set, width: int, rows: int):
@@ -63,13 +42,13 @@ def draw(board: set, width: int, rows: int, erasing=False):
         board.add(board_pos)
 
 
-def main(rows: int):
-    window = pygame.display.set_mode((WIDTH, WIDTH))
+def main(rows: int, width: int):
+    board = set()
+
+    window = pygame.display.set_mode((width, width))
     pygame.display.set_caption("Game Of Life")
     clock = pygame.time.Clock()
     running = True
-
-    board = set()
 
     drawing = True
 
@@ -83,12 +62,20 @@ def main(rows: int):
                 running = False
 
         keys = pygame.key.get_pressed()
+
+        if keys[pygame.K_s]:
+            save(board)
+        elif keys[pygame.K_o]:
+            new_board = open_file()
+            if new_board:
+                board = new_board
+
         if drawing:
             mouse_buttons = pygame.mouse.get_pressed(3)
             if mouse_buttons[0]:
-                draw(board, WIDTH, rows)
+                draw(board, width, rows)
             elif mouse_buttons[2]:
-                draw(board, WIDTH, rows, erasing=True)
+                draw(board, width, rows, erasing=True)
         else:
             board = play(board, rows)
 
@@ -99,11 +86,11 @@ def main(rows: int):
         previous_space = current_space
         # press space bar once.
 
-        display(window, board, WIDTH, rows)
+        display(window, board, width, rows)
         pygame.display.update()
 
     pygame.quit()
 
 
 if __name__ == "__main__":
-    main(100)
+    main(100, 800)
