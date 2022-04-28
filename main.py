@@ -24,6 +24,13 @@ def open_file():
         return eval(file.read())
 
 
+def file_handler(keys, board: set):
+    if keys[pygame.K_RETURN]:
+        save(board)
+    elif keys[pygame.K_BACKSPACE]:
+        return open_file()
+
+
 def camera_movement_handler(keys, camera_pos, speed: int):
     camera_pos[0] += speed * (keys[pygame.K_a] - keys[pygame.K_d] + keys[pygame.K_LEFT] - keys[pygame.K_RIGHT])
     camera_pos[1] += speed * (keys[pygame.K_w] - keys[pygame.K_s] + keys[pygame.K_UP] - keys[pygame.K_DOWN])
@@ -40,19 +47,19 @@ def display(window, board: set, block_width: int, camera_position):
                                                     block_width))
 
 
-def draw(board: set, block_width: int, camera_position, erasing=False):
+def draw_handler(board: set, block_width: int, camera_position, mouse_buttons):
     mouse_pos = pygame.mouse.get_pos()
 
     board_pos = (mouse_pos[0] // block_width - camera_position[0], mouse_pos[1] // block_width - camera_position[1])
 
-    if erasing:
+    if mouse_buttons[2]:
         if board_pos in board:
             board.remove(board_pos)
-    else:
+    elif mouse_buttons[0]:
         board.add(board_pos)
 
 
-def main(rows: int, width: int):
+def main(width: int, rows: int):
     board = set()
 
     window = pygame.display.set_mode((width, width))
@@ -64,8 +71,6 @@ def main(rows: int, width: int):
 
     drawing = True
 
-    previous_space = False
-
     while running:
         clock.tick(20)
 
@@ -73,34 +78,29 @@ def main(rows: int, width: int):
             if event.type == pygame.QUIT:
                 running = False
 
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    drawing = not drawing
+
+                if event.key == pygame.K_q:
+                    block_width //= 2
+                if event.key == pygame.K_e:
+                    block_width *= 2
+                # zoom
+
         keys = pygame.key.get_pressed()
 
         camera_movement_handler(keys, camera_pos, 1)
 
         if drawing:
-            mouse_buttons = pygame.mouse.get_pressed(3)
-            if mouse_buttons[0]:
-                draw(board, block_width, camera_pos)
-            elif mouse_buttons[2]:
-                draw(board, block_width, camera_pos, erasing=True)
+            draw_handler(board, block_width, camera_pos, pygame.mouse.get_pressed(3))
             # mouse
 
-            if keys[pygame.K_RETURN]:
-                save(board)
-            elif keys[pygame.K_BACKSPACE]:
-                new_board = open_file()
-                if new_board:
-                    board = new_board
+            if fh := file_handler(keys, board):
+                board = fh
             # save/open files
         else:
             board = play(board)
-
-        current_space = keys[pygame.K_SPACE]
-        if current_space and not previous_space:
-            drawing = not drawing
-
-        previous_space = current_space
-        # press space bar once.
 
         display(window, board, block_width, camera_pos)
         pygame.display.update()
@@ -109,4 +109,4 @@ def main(rows: int, width: int):
 
 
 if __name__ == "__main__":
-    main(100, 800)
+    main(800, 100)
