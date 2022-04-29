@@ -37,20 +37,21 @@ def camera_movement_handler(keys, camera_pos, speed: int):
     # WASD + D-PAD
 
 
-def display(window, board: set, block_width: int, camera_position):
+def display(window, width: int, board: set, block_width: int, camera_position):
     window.fill(BLACK)
 
     for (x_pos, y_pos) in board:
-        pygame.draw.rect(window, WHITE, pygame.Rect(block_width * (x_pos + camera_position[0]),
-                                                    block_width * (y_pos + camera_position[1]),
+        pygame.draw.rect(window, WHITE, pygame.Rect(block_width * (x_pos + camera_position[0]) + width // 2,
+                                                    block_width * (y_pos + camera_position[1]) + width // 2,
                                                     block_width,
                                                     block_width))
 
 
-def draw_handler(board: set, block_width: int, camera_position, mouse_buttons):
+def draw_handler(board: set, width: int, block_width: int, camera_position, mouse_buttons):
     mouse_pos = pygame.mouse.get_pos()
 
-    board_pos = (mouse_pos[0] // block_width - camera_position[0], mouse_pos[1] // block_width - camera_position[1])
+    board_pos = ((mouse_pos[0] - width // 2) // block_width - camera_position[0],
+                 (mouse_pos[1] - width // 2) // block_width - camera_position[1])
 
     if mouse_buttons[2]:
         if board_pos in board:
@@ -67,6 +68,7 @@ def main(width: int, rows: int):
     clock = pygame.time.Clock()
     running = True
     camera_pos = [0, 0]
+    # center
     block_width = width // rows
 
     drawing = True
@@ -93,7 +95,7 @@ def main(width: int, rows: int):
         camera_movement_handler(keys, camera_pos, 1)
 
         if drawing:
-            draw_handler(board, block_width, camera_pos, pygame.mouse.get_pressed(3))
+            draw_handler(board, width, block_width, camera_pos, pygame.mouse.get_pressed(3))
             # mouse
 
             if fh := file_handler(keys, board):
@@ -102,7 +104,7 @@ def main(width: int, rows: int):
         else:
             board = play(board)
 
-        display(window, board, block_width, camera_pos)
+        display(window, width, board, block_width, camera_pos)
         pygame.display.update()
 
     pygame.quit()
