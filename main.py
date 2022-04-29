@@ -84,9 +84,9 @@ def main(width: int, rows: int):
                 if event.key == pygame.K_SPACE:
                     drawing = not drawing
 
-                if event.key == pygame.K_q:
+                if event.key == pygame.K_q and block_width >= 2:
                     block_width //= 2
-                if event.key == pygame.K_e:
+                if event.key == pygame.K_e and block_width <= width:
                     block_width *= 2
                 # zoom
 
