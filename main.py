@@ -31,7 +31,7 @@ def file_handler(keys, board: set):
         return open_file()
 
 
-def camera_movement_handler(keys, camera_pos, speed: int):
+def camera_movement_handler(keys, camera_pos, speed: float):
     camera_pos[0] += speed * (keys[pygame.K_a] - keys[pygame.K_d] + keys[pygame.K_LEFT] - keys[pygame.K_RIGHT])
     camera_pos[1] += speed * (keys[pygame.K_w] - keys[pygame.K_s] + keys[pygame.K_UP] - keys[pygame.K_DOWN])
     # WASD + D-PAD
@@ -70,6 +70,7 @@ def main(width: int, rows: int):
     camera_pos = [0, 0]
     # center
     block_width = width // rows
+    speed = block_width * 10
 
     drawing = True
 
@@ -92,7 +93,7 @@ def main(width: int, rows: int):
 
         keys = pygame.key.get_pressed()
 
-        camera_movement_handler(keys, camera_pos, 1)
+        camera_movement_handler(keys, camera_pos, width / block_width / speed)
 
         if drawing:
             draw_handler(board, width, block_width, camera_pos, pygame.mouse.get_pressed(3))
