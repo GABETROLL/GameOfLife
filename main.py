@@ -50,8 +50,8 @@ def display(window, width: int, board: set, block_width: int, camera_position):
 def draw_handler(board: set, width: int, block_width: int, camera_position, mouse_buttons):
     mouse_pos = pygame.mouse.get_pos()
 
-    board_pos = ((mouse_pos[0] - width // 2) // block_width - camera_position[0],
-                 (mouse_pos[1] - width // 2) // block_width - camera_position[1])
+    board_pos = int((mouse_pos[0] - width // 2) // block_width - camera_position[0]),\
+                int((mouse_pos[1] - width // 2) // block_width - camera_position[1])
 
     if mouse_buttons[2]:
         if board_pos in board:
