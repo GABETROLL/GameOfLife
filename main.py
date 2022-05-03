@@ -24,7 +24,8 @@ def open_file():
         return eval(file.read())
 
 
-def window_pos(width: int, game_pos: tuple[int, int], camera_position: list[int, int], block_width: int) -> tuple[int, int]:
+def window_pos(width: int, game_pos: tuple[int, int],
+               camera_position: list[int, int], block_width: int) -> tuple[int, int]:
     return block_width * game_pos[0] + camera_position[0] + width // 2, \
            block_width * game_pos[1] + camera_position[1] + width // 2
 
@@ -39,7 +40,8 @@ def display(window, width: int, board: set, block_width: int, camera_position):
                                                     block_width))
 
 
-def board_pos(width: int, screen_pos: tuple[int, int], camera_position: list[int, int], block_width: int) -> tuple[int, int]:
+def board_pos(width: int, screen_pos: tuple[int, int],
+              camera_position: list[int, int], block_width: int) -> tuple[int, int]:
     return int((screen_pos[0] - camera_position[0] - width // 2) // block_width), \
            int((screen_pos[1] - camera_position[1] - width // 2) // block_width)
 
@@ -93,8 +95,10 @@ class InputHandler:
             return open_file()
 
     def camera_movement_handler(self):
-        self.camera_position[0] += self.speed * (self.keys[pygame.K_a] - self.keys[pygame.K_d] + self.keys[pygame.K_LEFT] - self.keys[pygame.K_RIGHT])
-        self.camera_position[1] += self.speed * (self.keys[pygame.K_w] - self.keys[pygame.K_s] + self.keys[pygame.K_UP] - self.keys[pygame.K_DOWN])
+        self.camera_position[0] += self.speed * (self.keys[pygame.K_a] - self.keys[pygame.K_d] +
+                                                 self.keys[pygame.K_LEFT] - self.keys[pygame.K_RIGHT])
+        self.camera_position[1] += self.speed * (self.keys[pygame.K_w] - self.keys[pygame.K_s] +
+                                                 self.keys[pygame.K_UP] - self.keys[pygame.K_DOWN])
         # WASD + D-PAD
 
     def delete_region(self):
@@ -159,7 +163,12 @@ class InputHandler:
             self.copy = set()
 
     def display_keybind_text(self):
-        text = self.font.render("WASD/D-PAD: move, space bar: play/stop, q/e: zoom out/in, backspace: open, enter: save" if not self.last_pos else "c: copy, delete: delete", True, (255, 255, 255))
+        if self.last_pos:
+            text_text = "c: copy, delete: delete"
+        else:
+            text_text = "WASD/D-PAD: move, space bar: play/stop, q/e: zoom out/in, backspace: open, enter: save"
+
+        text = self.font.render(text_text, True, (255, 255, 255))
 
         self.window.blit(text, (0, self.width - 10))
 
@@ -212,8 +221,6 @@ def main(width: int, rows: int):
                     camera_pos[1] *= 2
                     block_width *= 2
                 # zoom
-
-        keys = pygame.key.get_pressed()
 
         input_handler.handler(drawing, block_width)
         if not drawing:
