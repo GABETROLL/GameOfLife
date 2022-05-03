@@ -24,19 +24,6 @@ def open_file():
         return eval(file.read())
 
 
-def file_handler(keys, board: set):
-    if keys[pygame.K_RETURN]:
-        save(board)
-    elif keys[pygame.K_BACKSPACE]:
-        return open_file()
-
-
-def camera_movement_handler(keys, camera_pos, speed: int):
-    camera_pos[0] += speed * (keys[pygame.K_a] - keys[pygame.K_d] + keys[pygame.K_LEFT] - keys[pygame.K_RIGHT])
-    camera_pos[1] += speed * (keys[pygame.K_w] - keys[pygame.K_s] + keys[pygame.K_UP] - keys[pygame.K_DOWN])
-    # WASD + D-PAD
-
-
 def window_pos(width: int, game_pos: tuple[int, int], camera_position: list[int, int], block_width: int) -> tuple[int, int]:
     return block_width * game_pos[0] + camera_position[0] + width // 2, \
            block_width * game_pos[1] + camera_position[1] + width // 2
@@ -57,18 +44,22 @@ def board_pos(width: int, screen_pos: tuple[int, int], camera_position: list[int
            int((screen_pos[1] - camera_position[1] - width // 2) // block_width)
 
 
-class Select:
+class InputHandler:
     def __init__(self,
                  window,
                  width: int,
                  board: set,
                  camera_position: list[int, int],
+                 camera_speed: int,
                  key_bind_font: pygame.font.Font):
 
         self.window = window
         self.width = width
 
+        self.keys = pygame.key.get_pressed()
+
         self.camera_position = camera_position
+        self.speed = camera_speed
 
         self.board = board
 
@@ -95,6 +86,17 @@ class Select:
 
         return result
 
+    def file_handler(self):
+        if self.keys[pygame.K_RETURN]:
+            save(self.board)
+        elif self.keys[pygame.K_BACKSPACE]:
+            return open_file()
+
+    def camera_movement_handler(self):
+        self.camera_position[0] += self.speed * (self.keys[pygame.K_a] - self.keys[pygame.K_d] + self.keys[pygame.K_LEFT] - self.keys[pygame.K_RIGHT])
+        self.camera_position[1] += self.speed * (self.keys[pygame.K_w] - self.keys[pygame.K_s] + self.keys[pygame.K_UP] - self.keys[pygame.K_DOWN])
+        # WASD + D-PAD
+
     def delete_region(self):
         for (i, j) in self.region:
             self.board.remove((i, j))
@@ -105,39 +107,59 @@ class Select:
         for (i, j) in self.copy:
             self.board.add((i + difference[0], j + difference[1]))
 
-    def handler(self, block_width: int):
-        mouse_pos = pygame.mouse.get_pos()
-
+    def copy_paste_delete_handler(self, mouse_pos: tuple[int, int]):
         if self.last_pos:
-            keys = pygame.key.get_pressed()
-
-            if keys[pygame.K_c]:
+            if self.keys[pygame.K_c]:
                 self.copy = self.region
-            elif keys[pygame.K_DELETE]:
+            elif self.keys[pygame.K_DELETE]:
                 self.delete_region()
-            elif keys[pygame.K_p]:
+            elif self.keys[pygame.K_p]:
                 self.paste_region(mouse_pos)
+        # copy / paste / delete
 
-        mouse_buttons = pygame.mouse.get_pressed(3)
-        wheel_pressed = mouse_buttons[1]
+    def handler(self, drawing: bool, block_width: int):
+        mouse_pos = pygame.mouse.get_pos()
+        self.keys = pygame.key.get_pressed()
 
-        board_position = board_pos(self.width, mouse_pos, self.camera_position, block_width)
+        self.file_handler()
+        self.camera_movement_handler()
 
-        if self.previous_wheel and not wheel_pressed:
-            self.last_pos = board_position
-        elif not self.previous_wheel and wheel_pressed:
+        if drawing:
+            self.copy_paste_delete_handler(mouse_pos)
+
+            mouse_buttons = pygame.mouse.get_pressed(3)
+            wheel_pressed = mouse_buttons[1]
+
+            board_position = board_pos(self.width, mouse_pos, self.camera_position, block_width)
+
+            if mouse_buttons[0] or mouse_buttons[2]:
+                # Drawing resets the selection.
+                self.first_pos = ()
+                self.last_pos = ()
+
+                if mouse_buttons[2]:
+                    if board_position in self.board:
+                        self.board.remove(board_position)
+                elif mouse_buttons[0]:
+                    self.board.add(board_position)
+
+            if self.previous_wheel and not wheel_pressed:
+                self.last_pos = board_position
+            elif not self.previous_wheel and wheel_pressed:
+                self.first_pos = ()
+                self.last_pos = ()
+
+                self.first_pos = board_position
+            # select region with scrollbar
+
+            self.previous_wheel = wheel_pressed
+        else:
             self.first_pos = ()
             self.last_pos = ()
-
-            self.first_pos = board_position
-        elif self.last_pos and (mouse_buttons[0] or mouse_buttons[2]):
-            self.first_pos = ()
-            self.last_pos = ()
-
-        self.previous_wheel = wheel_pressed
+            self.copy = set()
 
     def display_keybind_text(self):
-        text = self.font.render("WASD/D-PAD: move, space bar: play/stop, q/e: zoom out/in, backspace: open, enter: save" if not self.last_pos else "c: copy, delete: delete", True, 12)
+        text = self.font.render("WASD/D-PAD: move, space bar: play/stop, q/e: zoom out/in, backspace: open, enter: save" if not self.last_pos else "c: copy, delete: delete", True, (255, 255, 255))
 
         self.window.blit(text, (0, self.width - 10))
 
@@ -155,18 +177,6 @@ class Select:
         self.display_keybind_text()
 
 
-def draw_handler(board: set, width: int, block_width: int, camera_position: list[int, int], mouse_buttons):
-    mouse_pos = pygame.mouse.get_pos()
-
-    board_position = board_pos(width, mouse_pos, camera_position, block_width)
-
-    if mouse_buttons[2]:
-        if board_position in board:
-            board.remove(board_position)
-    elif mouse_buttons[0]:
-        board.add(board_position)
-
-
 def main(width: int, rows: int):
     board = set()
 
@@ -180,7 +190,7 @@ def main(width: int, rows: int):
     block_width = width // rows
 
     drawing = True
-    select_handler = Select(window, width, board, camera_pos, pygame.font.SysFont("Consolas", 10))
+    input_handler = InputHandler(window, width, board, camera_pos, 5, pygame.font.SysFont("Consolas", 10))
 
     while running:
         clock.tick(20)
@@ -205,21 +215,12 @@ def main(width: int, rows: int):
 
         keys = pygame.key.get_pressed()
 
-        camera_movement_handler(keys, camera_pos, 5)
-
-        if drawing:
-            draw_handler(board, width, block_width, camera_pos, pygame.mouse.get_pressed(3))
-            select_handler.handler(block_width)
-            # mouse
-
-            if fh := file_handler(keys, board):
-                board = fh
-            # save/open files
-        else:
+        input_handler.handler(drawing, block_width)
+        if not drawing:
             board = play(board)
 
         display(window, width, board, block_width, camera_pos)
-        select_handler.display(block_width)
+        input_handler.display(block_width)
         pygame.display.update()
 
     pygame.quit()
