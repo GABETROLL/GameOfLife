@@ -69,7 +69,7 @@ class InputHandler:
         self.last_pos = ()
         # corners of highlighted region
 
-        self.copy = set()
+        self.copy = ((), set())
         # region to paste
 
         self.font = key_bind_font
@@ -106,19 +106,20 @@ class InputHandler:
             self.board.remove((i, j))
 
     def paste_region(self, pos: tuple[int, int]):
-        difference = (pos[0] - self.first_pos[0], pos[1] - self.first_pos[1])
+        difference = (pos[0] - self.copy[0][0], pos[1] - self.copy[0][1])
+        print(difference)
 
-        for (i, j) in self.copy:
+        for (i, j) in self.copy[1]:
             self.board.add((i + difference[0], j + difference[1]))
 
-    def copy_paste_delete_handler(self, mouse_pos: tuple[int, int]):
+    def copy_paste_delete_handler(self, mouse_pos: tuple[int, int], block_width: int):
         if self.last_pos:
             if self.keys[pygame.K_c]:
-                self.copy = self.region
+                self.copy = (self.first_pos, self.region)
             elif self.keys[pygame.K_DELETE]:
                 self.delete_region()
-            elif self.keys[pygame.K_p]:
-                self.paste_region(mouse_pos)
+        if self.keys[pygame.K_p]:
+            self.paste_region(board_pos(self.width, mouse_pos, self.camera_position, block_width))
         # copy / paste / delete
 
     def handler(self, drawing: bool, block_width: int):
@@ -129,7 +130,7 @@ class InputHandler:
         self.camera_movement_handler()
 
         if drawing:
-            self.copy_paste_delete_handler(mouse_pos)
+            self.copy_paste_delete_handler(mouse_pos, block_width)
 
             mouse_buttons = pygame.mouse.get_pressed(3)
             wheel_pressed = mouse_buttons[1]
