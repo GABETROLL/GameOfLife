@@ -31,7 +31,7 @@ def file_handler(keys, board: set):
         return open_file()
 
 
-def camera_movement_handler(keys, camera_pos, speed: float):
+def camera_movement_handler(keys, camera_pos, speed: int):
     camera_pos[0] += speed * (keys[pygame.K_a] - keys[pygame.K_d] + keys[pygame.K_LEFT] - keys[pygame.K_RIGHT])
     camera_pos[1] += speed * (keys[pygame.K_w] - keys[pygame.K_s] + keys[pygame.K_UP] - keys[pygame.K_DOWN])
     # WASD + D-PAD
@@ -41,8 +41,8 @@ def display(window, width: int, board: set, block_width: int, camera_position):
     window.fill(BLACK)
 
     for (x_pos, y_pos) in board:
-        pygame.draw.rect(window, WHITE, pygame.Rect(block_width * (x_pos + camera_position[0]) + width // 2,
-                                                    block_width * (y_pos + camera_position[1]) + width // 2,
+        pygame.draw.rect(window, WHITE, pygame.Rect(block_width * x_pos + camera_position[0] + width // 2,
+                                                    block_width * y_pos + camera_position[1] + width // 2,
                                                     block_width,
                                                     block_width))
 
@@ -50,8 +50,8 @@ def display(window, width: int, board: set, block_width: int, camera_position):
 def draw_handler(board: set, width: int, block_width: int, camera_position, mouse_buttons):
     mouse_pos = pygame.mouse.get_pos()
 
-    board_pos = int((mouse_pos[0] - width // 2) // block_width - camera_position[0]),\
-                int((mouse_pos[1] - width // 2) // block_width - camera_position[1])
+    board_pos = int((mouse_pos[0] - camera_position[0] - width // 2) // block_width),\
+                int((mouse_pos[1] - camera_position[1] - width // 2) // block_width)
 
     if mouse_buttons[2]:
         if board_pos in board:
@@ -93,7 +93,7 @@ def main(width: int, rows: int):
 
         keys = pygame.key.get_pressed()
 
-        camera_movement_handler(keys, camera_pos, width / block_width / speed)
+        camera_movement_handler(keys, camera_pos, 5)
 
         if drawing:
             draw_handler(board, width, block_width, camera_pos, pygame.mouse.get_pressed(3))
