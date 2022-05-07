@@ -124,9 +124,11 @@ class InputHandler:
 
         # copy / paste / delete
 
-    def handler(self, drawing: bool, block_width: int):
+    def handler(self, drawing: bool, block_width: int, board: set):
         mouse_pos = pygame.mouse.get_pos()
         self.keys = pygame.key.get_pressed()
+
+        self.board = board
 
         self.file_handler()
         self.camera_movement_handler()
@@ -236,12 +238,11 @@ def main(width: int, rows: int):
                     block_width *= 2
                 # zoom
 
-        input_handler.handler(drawing, block_width)
+        input_handler.handler(drawing, block_width, board)
         if not drawing:
             board = play(board)
 
         display(window, width, board, block_width, camera_pos)
-        input_handler.board = board
         if drawing:
             input_handler.display(block_width, pygame.mouse.get_pos())
         pygame.display.update()
