@@ -69,8 +69,8 @@ class InputHandler:
         self.last_pos = ()
         # corners of highlighted region
 
-        self.copy = ((), set())
-        # region to paste
+        self.copy = [(), set(), False]
+        # region to paste: [first_pos, board section, previewing]
 
         self.font = key_bind_font
 
@@ -107,7 +107,6 @@ class InputHandler:
 
     def paste_region(self, pos: tuple[int, int]):
         difference = (pos[0] - self.copy[0][0], pos[1] - self.copy[0][1])
-        print(difference)
 
         for (i, j) in self.copy[1]:
             self.board.add((i + difference[0], j + difference[1]))
@@ -115,11 +114,14 @@ class InputHandler:
     def copy_paste_delete_handler(self, mouse_pos: tuple[int, int], block_width: int):
         if self.last_pos:
             if self.keys[pygame.K_c]:
-                self.copy = (self.first_pos, self.region)
+                self.copy = [self.first_pos, self.region, False]
             elif self.keys[pygame.K_DELETE]:
                 self.delete_region()
         if self.keys[pygame.K_p]:
-            self.paste_region(board_pos(self.width, mouse_pos, self.camera_position, block_width))
+            if self.copy[2]:
+                self.paste_region(board_pos(self.width, mouse_pos, self.camera_position, block_width))
+            self.copy[2] = not self.copy[2]
+
         # copy / paste / delete
 
     def handler(self, drawing: bool, block_width: int):
@@ -161,7 +163,15 @@ class InputHandler:
         else:
             self.first_pos = ()
             self.last_pos = ()
-            self.copy = set()
+            self.copy = [(), set(), False]
+
+    def preview_paste(self, block_width: int, mouse_pos: tuple[int, int]):
+        preview_pos = board_pos(self.width, mouse_pos, self.camera_position, block_width)
+
+        for (i, j) in self.copy[1]:
+            pos = window_pos(self.width, (mouse_pos[0] + i, mouse_pos[1] + j), self.camera_position, block_width)
+
+            pygame.draw.rect(self.window, (128, 128, 128), pygame.Rect(pos[0], pos[1], block_width, block_width))
 
     def display_keybind_text(self):
         if self.last_pos:
@@ -173,7 +183,10 @@ class InputHandler:
 
         self.window.blit(text, (0, self.width - 10))
 
-    def display(self, block_width: int):
+    def display(self, block_width: int, mouse_pos: tuple[int, int]):
+        if self.copy[2]:
+            self.preview_paste(block_width, mouse_pos)
+
         if self.first_pos:
             first_pos = window_pos(self.width, self.first_pos, self.camera_position, block_width)
             last_pos = window_pos(self.width, self.last_pos, self.camera_position, block_width) if self.last_pos else pygame.mouse.get_pos()
@@ -228,9 +241,10 @@ def main(width: int, rows: int):
             board = play(board)
 
         display(window, width, board, block_width, camera_pos)
-        input_handler.display(block_width)
+        input_handler.board = board
+        if drawing:
+            input_handler.display(block_width, pygame.mouse.get_pos())
         pygame.display.update()
-
     pygame.quit()
 
 
