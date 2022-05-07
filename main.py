@@ -120,6 +120,7 @@ class InputHandler:
             if self.copy[2]:
                 self.paste_region(board_pos(self.width, mouse_pos, self.camera_position, block_width))
             self.copy[2] = not self.copy[2]
+            # paste once to preview, twice to paste.
 
         # copy / paste / delete
 
@@ -130,7 +131,6 @@ class InputHandler:
 
         self.board = board
 
-        self.file_handler()
         self.camera_movement_handler()
 
         if drawing:
@@ -165,8 +165,6 @@ class InputHandler:
             # cop/pasting resets when not drawing.
 
     def preview_paste(self, block_width: int, mouse_pos: tuple[int, int]):
-        preview_pos = board_pos(self.width, mouse_pos, self.camera_position, block_width)
-
         for (i, j) in self.copy[1]:
             pos = window_pos(self.width, (mouse_pos[0] + i, mouse_pos[1] + j), self.camera_position, block_width)
 
@@ -188,7 +186,8 @@ class InputHandler:
 
         if self.first_pos:
             first_pos = window_pos(self.width, self.first_pos, self.camera_position, block_width)
-            last_pos = window_pos(self.width, self.last_pos, self.camera_position, block_width) if self.last_pos else pygame.mouse.get_pos()
+            last_pos = window_pos(self.width, self.last_pos, self.camera_position, block_width) if self.last_pos \
+                else pygame.mouse.get_pos()
 
             pygame.draw.line(self.window, (255, 255, 0), first_pos, (last_pos[0], first_pos[1]))
             pygame.draw.line(self.window, (255, 255, 0), first_pos, (first_pos[0], last_pos[1]))
@@ -240,10 +239,14 @@ def main(width: int, rows: int):
 
                 key_down_event_keys.add(event.key)
 
-            if event.type == pygame.MOUSEBUTTONUP or event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed(3)[1]:
+            if event.type == pygame.MOUSEBUTTONUP or event.type == pygame.MOUSEBUTTONDOWN and \
+                    pygame.mouse.get_pressed(3)[1]:
                 mouse_wheel_event = event
 
+        if fh := input_handler.file_handler():
+            board = fh
         input_handler.handler(drawing, block_width, board, mouse_wheel_event, key_down_event_keys)
+
         if not drawing:
             board = play(board)
 
@@ -251,6 +254,7 @@ def main(width: int, rows: int):
         if drawing:
             input_handler.display(block_width, pygame.mouse.get_pos())
         pygame.display.update()
+
     pygame.quit()
 
 
