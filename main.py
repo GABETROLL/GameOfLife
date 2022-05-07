@@ -103,11 +103,14 @@ class InputHandler:
         for (i, j) in self.region:
             self.board.remove((i, j))
 
-    def paste_region(self, pos: tuple[int, int]):
-        difference = (pos[0] - self.copy[0][0], pos[1] - self.copy[0][1])
+    def paste_positions(self, game_pos: tuple[int, int], region: set):
+        difference = (game_pos[0] - self.copy[0][0], game_pos[1] - self.copy[0][1])
+        for (i, j) in region:
+            yield i + difference[0], j + difference[1]
 
-        for (i, j) in self.copy[1]:
-            self.board.add((i + difference[0], j + difference[1]))
+    def paste_region(self, game_pos: tuple[int, int]):
+        for p in self.paste_positions(game_pos, self.copy[1]):
+            self.board.add(p)
 
     def copy_paste_delete_handler(self, mouse_pos: tuple[int, int], block_width: int,
                                   key_down_event_keys: set):
@@ -165,9 +168,10 @@ class InputHandler:
             # cop/pasting resets when not drawing.
 
     def preview_paste(self, block_width: int, mouse_pos: tuple[int, int]):
-        for (i, j) in self.copy[1]:
-            pos = window_pos(self.width, (mouse_pos[0] + i, mouse_pos[1] + j), self.camera_position, block_width)
+        game_pos = board_pos(self.width, mouse_pos, self.camera_position, block_width)
 
+        for pos in self.paste_positions(game_pos, self.copy[1]):
+            pos = window_pos(self.width, pos, self.camera_position, block_width)
             pygame.draw.rect(self.window, (128, 128, 128), pygame.Rect(pos[0], pos[1], block_width, block_width))
 
     def display_keybind_text(self):
