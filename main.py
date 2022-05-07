@@ -74,8 +74,6 @@ class InputHandler:
 
         self.font = key_bind_font
 
-        self.previous_wheel = False
-
     @property
     def region(self):
         result = set()
@@ -111,20 +109,22 @@ class InputHandler:
         for (i, j) in self.copy[1]:
             self.board.add((i + difference[0], j + difference[1]))
 
-    def copy_paste_delete_handler(self, mouse_pos: tuple[int, int], block_width: int):
+    def copy_paste_delete_handler(self, mouse_pos: tuple[int, int], block_width: int,
+                                  key_down_event_keys: set):
         if self.last_pos:
-            if self.keys[pygame.K_c]:
+            if pygame.K_c in key_down_event_keys:
                 self.copy = [self.first_pos, self.region, False]
-            elif self.keys[pygame.K_DELETE]:
+            elif pygame.K_DELETE in key_down_event_keys:
                 self.delete_region()
-        if self.keys[pygame.K_p]:
+        if pygame.K_p in key_down_event_keys:
             if self.copy[2]:
                 self.paste_region(board_pos(self.width, mouse_pos, self.camera_position, block_width))
             self.copy[2] = not self.copy[2]
 
         # copy / paste / delete
 
-    def handler(self, drawing: bool, block_width: int, board: set):
+    def handler(self, drawing: bool, block_width: int, board: set,
+                mouse_wheel_event: pygame.event.Event, key_down_event_keys: set):
         mouse_pos = pygame.mouse.get_pos()
         self.keys = pygame.key.get_pressed()
 
@@ -134,10 +134,9 @@ class InputHandler:
         self.camera_movement_handler()
 
         if drawing:
-            self.copy_paste_delete_handler(mouse_pos, block_width)
+            self.copy_paste_delete_handler(mouse_pos, block_width, key_down_event_keys)
 
             mouse_buttons = pygame.mouse.get_pressed(3)
-            wheel_pressed = mouse_buttons[1]
 
             board_position = board_pos(self.width, mouse_pos, self.camera_position, block_width)
 
@@ -152,20 +151,18 @@ class InputHandler:
                 elif mouse_buttons[0]:
                     self.board.add(board_position)
 
-            if self.previous_wheel and not wheel_pressed:
-                self.last_pos = board_position
-            elif not self.previous_wheel and wheel_pressed:
-                self.first_pos = ()
-                self.last_pos = ()
-
-                self.first_pos = board_position
+            if mouse_wheel_event:
+                if mouse_wheel_event.type == pygame.MOUSEBUTTONUP:
+                    self.last_pos = board_position
+                elif mouse_wheel_event.type == pygame.MOUSEBUTTONDOWN:
+                    self.first_pos = board_position
+                    self.last_pos = ()
             # select region with scrollbar
-
-            self.previous_wheel = wheel_pressed
         else:
             self.first_pos = ()
             self.last_pos = ()
             self.copy = [(), set(), False]
+            # cop/pasting resets when not drawing.
 
     def preview_paste(self, block_width: int, mouse_pos: tuple[int, int]):
         preview_pos = board_pos(self.width, mouse_pos, self.camera_position, block_width)
@@ -220,6 +217,9 @@ def main(width: int, rows: int):
     while running:
         clock.tick(20)
 
+        mouse_wheel_event = None
+        key_down_event_keys = set()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -238,7 +238,12 @@ def main(width: int, rows: int):
                     block_width *= 2
                 # zoom
 
-        input_handler.handler(drawing, block_width, board)
+                key_down_event_keys.add(event.key)
+
+            if event.type == pygame.MOUSEBUTTONUP or event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed(3)[1]:
+                mouse_wheel_event = event
+
+        input_handler.handler(drawing, block_width, board, mouse_wheel_event, key_down_event_keys)
         if not drawing:
             board = play(board)
 
