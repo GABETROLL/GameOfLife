@@ -78,7 +78,7 @@ class InputHandler:
     def region(self):
         result = set()
 
-        if self.last_pos:
+        if self.last_pos and self.first_pos:
             for i in range(self.first_pos[0], self.last_pos[0] + 1):
                 for j in range(self.first_pos[1], self.last_pos[1] + 1):
                     if (i, j) in self.board:
